@@ -1,11 +1,16 @@
 import express, { Request, Response, NextFunction }  from 'express';
 import routes from './routes';
+var path = require('path');
 var createError = require('http-errors');
 
 
 const PORT = 3000;
 
 const app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

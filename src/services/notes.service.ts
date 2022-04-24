@@ -3,6 +3,7 @@ import { NOTES } from '../init-data';
 import { v4 } from 'uuid';
 import { CATEGORIES } from "../init-data";
 import { ICategory } from "../models/categories.model";
+import { NoFieldError } from "../error.types"; 
 
 
 export type AddNoteParams = {
@@ -52,6 +53,15 @@ class NotesService {
     }
 
     addNote = ( { title, categoryId, content }: AddNoteParams) => {
+
+        if (!title) {
+            throw new NoFieldError('Field "title" is required');
+        }
+        
+        if (!categoryId) {
+            throw new NoFieldError('Field "categoryId" is required');
+        }
+
         const note: INote = {
             id: v4(), 
             title,

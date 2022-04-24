@@ -1,37 +1,60 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import { NoFieldError, WrongFieldValueError } from '../error.types';
 import { NOTES_SERVICE, AddNoteParams, UpdateNoteParams } from '../services/notes.service';
 
 
-export const getNotes = (req:Request, res:Response) => {
-    
-    const { isActive } = req.query;
+const handleError = (e: Error, res:Response) => {
 
-    if (isActive === undefined) {
-        
-        return res.status(200)
-            .json(NOTES_SERVICE.getNotes());
+    const errorClasses = [NoFieldError.name, WrongFieldValueError.name];
 
-    } else if (isActive === 'true' || isActive === '1') {
-
-        return res.status(200)
-            .json(NOTES_SERVICE.getNotes(true));
-
-    } else if (isActive === 'false' || isActive === '0') {
-
-        return res.status(200)
-            .json(NOTES_SERVICE.getNotes(false));
-
+    if ( errorClasses.includes(e.constructor.name)) {
+        return res.status(400)
+            .json({error: e.message});
     } else {
-
-        throw Error(`Wrong parameter isActive = '${isActive}'. It should be 'true' or 'false'.`)
-
+        //todo залогировать
+        return res.status(500);
     }
 }
 
+const parseIsActive = (isActive: any): boolean | undefined => {
+
+    if (isActive === undefined) {
+        return undefined;
+    } else if (isActive === 'true') { 
+        return true;
+    } else if (isActive === 'false') {
+        return false;
+    } else {
+        throw new WrongFieldValueError(
+            `Wrong value isActive = '${isActive}'. It should be 'true' or 'false'.`);
+    }
+}
+
+export const getNotes = (req:Request, res:Response) => {
+    
+    let notes;
+    try {
+        const isActive = parseIsActive(req.query.isActive);
+        notes = NOTES_SERVICE.getNotes(isActive);
+    } catch (e) {
+        return handleError((e as Error), res);
+    }
+    
+    return res.status(200).json(notes);
+}
+
+
 export const addNote = (req:Request<{}, {}, AddNoteParams, {}>, res:Response) => {
-    NOTES_SERVICE.addNote(req.body)
+
+    try {
+        NOTES_SERVICE.addNote(req.body);
+    } catch (e) {
+        return handleError((e as Error), res);
+    }
+    
     return res.sendStatus(200);
 }
+
 
 export const getNote = (req:Request, res:Response) => {
     const note = NOTES_SERVICE.getNote(req.params.id);
@@ -54,13 +77,21 @@ export const deleteNote = (req:Request, res:Response) => {
 
 export const updateNote = (req:Request, res:Response) => {
     
-    const params:UpdateNoteParams = {
-        ...req.body, 
-        id: req.params.id,
-        isActive: JSON.parse(req.body.isActive)
-    } 
+    let isUpdated;
+    try {
 
-    if( NOTES_SERVICE.updateNote(params) ) {
+        const params:UpdateNoteParams = {
+            ...req.body, 
+            id: req.params.id,
+            isActive: parseIsActive(req.body.isActive)
+        } 
+        isUpdated = NOTES_SERVICE.updateNote(params);
+
+    } catch (e) {
+        return handleError((e as Error), res);
+    }
+
+    if(isUpdated) {
         return res.sendStatus(200);
     } else {
         return res.sendStatus(404);
