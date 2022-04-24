@@ -2,6 +2,7 @@ import { INote } from "../models/notes.model";
 import { NOTES } from '../init-data';
 import { v4 } from 'uuid';
 import { CATEGORIES } from "../init-data";
+import { ICategory } from "../models/categories.model";
 
 
 export type AddNoteParams = {
@@ -18,6 +19,14 @@ export type UpdateNoteParams = {
     isActive: boolean
 }
 
+export type NotesState = Record<
+        string, // categoryId
+        {
+            category: ICategory, 
+            activeNotes: number,
+            archivedNotes: number
+        }>;
+
 class NotesService {
 
     notes: INote[];
@@ -26,9 +35,17 @@ class NotesService {
         this.notes = notes;
     }
 
-    getNotes = ():INote[] => {
-        return this.notes;
+    
+    getNotes = (isActive?: boolean):INote[] => {
+        
+        if (isActive === undefined) {
+            return this.notes;
+        } else  {
+            return this.notes
+                .filter(note => note.isActive === isActive ? true : false);
+        }
     }
+
 
     getNote = (id:string):INote | null => {
         return this.notes.find(note => note.id === id) || null;
@@ -81,6 +98,26 @@ class NotesService {
         } else {
             return false
         }
+    }
+
+    getNotesStats = () => {
+
+        const notesStats:NotesState = Object.values(CATEGORIES)
+            .reduce<NotesState>((stateMap, cat) => ({
+                ...stateMap, 
+                [cat.id]: {category: cat, activeNotes: 0, archivedNotes: 0}
+            }), {});
+    
+        this.getNotes()
+            .forEach(({category: {id}, isActive}) => {
+                if(isActive) {
+                    notesStats[id].activeNotes++;
+                } else {
+                    notesStats[id].archivedNotes++;
+                }
+            });
+
+        return Object.values(notesStats);
     }
 
 }

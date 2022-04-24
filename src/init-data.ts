@@ -6,22 +6,16 @@ export const CATEGORIES:Record<string, ICategory> = {
       id: '1',
       title: 'Task',
       iconName: 'bi-card-list',
-      activeNotes: 2,
-      archivedNotes: 0,
     },
     '2': {
       id: '2',
       title: 'Random Thought',
       iconName: 'bi-shuffle',
-      activeNotes: 1,
-      archivedNotes: 0,
     },
     '3': {
       id: '3',
       title: 'Idea',
       iconName: 'bi-lightbulb',
-      activeNotes: 2,
-      archivedNotes: 0,
     },
   }; 
   
@@ -49,7 +43,7 @@ export const NOTES: INote[] = [
         created: new Date(),
         category: CATEGORIES['3'],
         content: '',
-       isActive: true,
+        isActive: true,
       },
       {
         id: '4',
@@ -57,7 +51,7 @@ export const NOTES: INote[] = [
         created: new Date(),
         category: CATEGORIES['3'],
         content: '',
-       isActive: true,
+        isActive: true,
       },
       {
         id: '5',

@@ -1,7 +1,17 @@
 import { Express } from 'express';
-import { getNotes, addNote, getNote, deleteNote, updateNote } from './controllers/notes.controller';
+import { 
+    getNotes, 
+    addNote, 
+    getNote, 
+    deleteNote, 
+    updateNote, 
+    getNotesStats 
+} from './controllers/notes.controller';
+
 
 const routes = (app:Express) => {
+
+    app.get('/api/notes/stats', getNotesStats);
 
     app.get('/api/notes', getNotes);
 

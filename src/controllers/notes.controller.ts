@@ -3,7 +3,29 @@ import { NOTES_SERVICE, AddNoteParams, UpdateNoteParams } from '../services/note
 
 
 export const getNotes = (req:Request, res:Response) => {
-    return res.status(200).json(NOTES_SERVICE.getNotes());
+    
+    const { isActive } = req.query;
+
+    if (isActive === undefined) {
+        
+        return res.status(200)
+            .json(NOTES_SERVICE.getNotes());
+
+    } else if (isActive === 'true' || isActive === '1') {
+
+        return res.status(200)
+            .json(NOTES_SERVICE.getNotes(true));
+
+    } else if (isActive === 'false' || isActive === '0') {
+
+        return res.status(200)
+            .json(NOTES_SERVICE.getNotes(false));
+
+    } else {
+
+        throw Error(`Wrong parameter isActive = '${isActive}'. It should be 'true' or 'false'.`)
+
+    }
 }
 
 export const addNote = (req:Request<{}, {}, AddNoteParams, {}>, res:Response) => {
@@ -28,12 +50,24 @@ export const deleteNote = (req:Request, res:Response) => {
     }
 }
 
+
+
 export const updateNote = (req:Request, res:Response) => {
-    const params:UpdateNoteParams = {...req.body, id: req.params.id} 
+    
+    const params:UpdateNoteParams = {
+        ...req.body, 
+        id: req.params.id,
+        isActive: JSON.parse(req.body.isActive)
+    } 
+
     if( NOTES_SERVICE.updateNote(params) ) {
         return res.sendStatus(200);
     } else {
         return res.sendStatus(404);
     }
+}
+
+export const getNotesStats = (req:Request, res:Response) => {
+    return res.status(200).json(NOTES_SERVICE.getNotesStats());
 }
 
