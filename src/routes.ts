@@ -5,7 +5,8 @@ import {
     getNote, 
     deleteNote, 
     updateNote, 
-    getNotesStats 
+    getNotesStats,
+    get404 
 } from './controllers/notes.controller';
 
 
@@ -23,6 +24,7 @@ const routes = (app:Express) => {
 
     app.put('/api/notes/:id', updateNote)
 
+    app.get('/api/*', get404);
 }
 
 export default routes;

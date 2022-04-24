@@ -61,7 +61,7 @@ export const getNote = (req:Request, res:Response) => {
     if (note) {
         return res.status(200).json(note);
     } else {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 }
 
@@ -102,3 +102,6 @@ export const getNotesStats = (req:Request, res:Response) => {
     return res.status(200).json(NOTES_SERVICE.getNotesStats());
 }
 
+export const get404 = (req:Request, res:Response) => {
+    return res.sendStatus(404);
+}
