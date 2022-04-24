@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { NOTES_SERVICE, AddNoteParams } from '../services/notes.service';
+import { NOTES_SERVICE, AddNoteParams, UpdateNoteParams } from '../services/notes.service';
 
 
 export const getNotes = (req:Request, res:Response) => {
@@ -7,8 +7,6 @@ export const getNotes = (req:Request, res:Response) => {
 }
 
 export const addNote = (req:Request<{}, {}, AddNoteParams, {}>, res:Response) => {
-
-    console.log('addNote', req.body);
     NOTES_SERVICE.addNote(req.body)
     return res.sendStatus(200);
 }
@@ -31,7 +29,11 @@ export const deleteNote = (req:Request, res:Response) => {
 }
 
 export const updateNote = (req:Request, res:Response) => {
-    console.log(req.body);
-    return res.send(req.params);
+    const params:UpdateNoteParams = {...req.body, id: req.params.id} 
+    if( NOTES_SERVICE.updateNote(params) ) {
+        return res.sendStatus(200);
+    } else {
+        return res.sendStatus(404);
+    }
 }
 

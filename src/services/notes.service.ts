@@ -8,7 +8,14 @@ export type AddNoteParams = {
     title: string,
     categoryId: string,
     content: string,
-    date: Date | null
+}
+
+export type UpdateNoteParams = {
+    id: string,
+    title: string,
+    categoryId: string,
+    content: string,
+    isActive: boolean
 }
 
 class NotesService {
@@ -27,8 +34,7 @@ class NotesService {
         return this.notes.find(note => note.id === id) || null;
     }
 
-    addNote = ( { title, categoryId, content, date }: AddNoteParams) => {
-        
+    addNote = ( { title, categoryId, content }: AddNoteParams) => {
         const note: INote = {
             id: v4(), 
             title,
@@ -36,12 +42,37 @@ class NotesService {
             category: CATEGORIES[categoryId],
             content,
             isActive: true,
-            date: null,
-            dates: []
         };
-        
         this.notes.push(note);
     }
+
+    updateNote = ( { 
+        id, 
+        title, 
+        categoryId, 
+        content, 
+        isActive 
+    }: UpdateNoteParams) => {
+
+        const oldNote = NOTES_SERVICE.getNote(id);
+
+        if (!oldNote) {
+            return false;
+        }
+
+        const note: INote = {
+            ...oldNote, 
+            title, 
+            category: CATEGORIES[categoryId],
+            content,
+            isActive,
+        }
+
+        this.notes = this.notes.map(item => item.id === id ? note : item);
+
+        return true;
+    }
+
 
     deleteNote = (id:string):boolean => {
         if (this.notes.find(note => note.id === id)) {

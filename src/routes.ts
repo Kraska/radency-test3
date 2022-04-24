@@ -11,7 +11,7 @@ const routes = (app:Express) => {
     
     app.delete('/api/notes/:id', deleteNote)
 
-    app.patch('/api/notes/:id', updateNote)
+    app.put('/api/notes/:id', updateNote)
 
 }
 
