@@ -1,0 +1,25 @@
+version: '3'
+
+
+services:
+
+  backend:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 3001:3000
+    command: npm run dev
+
+  db:
+    image: postgres:latest  
+    restart: always
+    environment:
+        POSTGRES_PASSWORD: example
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080      
