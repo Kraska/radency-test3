@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 
 
 services:
@@ -14,12 +14,27 @@ services:
 
   db:
     image: postgres:latest  
-    restart: always
-    environment:
-        POSTGRES_PASSWORD: example
-
-  adminer:
-    image: adminer
+    container_name: local_pgdb
     restart: always
     ports:
-      - 8080:8080      
+      - "54320:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - local_pgdata:/var/lib/postgresql/data 
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+        PGADMIN_DEFAULT_EMAIL: katya@domain.com
+        PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 80:80 
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin 
+
+volumes:
+  local_pgdata:
+  pgadmin-data:
