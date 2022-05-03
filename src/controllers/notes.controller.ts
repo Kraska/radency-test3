@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { NoFieldError, WrongFieldValueError } from '../error.types';
-import { NOTES_SERVICE, AddNoteParams, UpdateNoteParams } from '../services/notes.service';
+import { CATEGORIES, NOTES } from '../db';
+import { InferCreationAttributes } from 'sequelize/types';
+import { Note } from '../db/Note';
 
 
 const handleError = (e: Error, res:Response) => {
@@ -12,7 +14,8 @@ const handleError = (e: Error, res:Response) => {
             .json({error: e.message});
     } else {
         //todo залогировать
-        return res.status(500);
+        return res.status(500)
+            .json({error: e.message});
     }
 }
 
@@ -30,76 +33,112 @@ const parseIsActive = (isActive: any): boolean | undefined => {
     }
 }
 
-export const getNotes = (req:Request, res:Response) => {
-    
-    let notes;
-    try {
-        const isActive = parseIsActive(req.query.isActive);
-        notes = NOTES_SERVICE.getNotes(isActive);
-    } catch (e) {
-        return handleError((e as Error), res);
-    }
-    
-    return res.status(200).json(notes);
-}
-
-
-export const addNote = (req:Request<{}, {}, AddNoteParams, {}>, res:Response) => {
+export const getNotes = async (req:Request, res:Response) => {
 
     try {
-        NOTES_SERVICE.addNote(req.body);
+        const notes = await NOTES.findAll();
+        return res.status(200).json({notes});
     } catch (e) {
-        return handleError((e as Error), res);
-    }
-    
-    return res.sendStatus(200);
-}
-
-
-export const getNote = (req:Request, res:Response) => {
-    const note = NOTES_SERVICE.getNote(req.params.id);
-    if (note) {
-        return res.status(200).json(note);
-    } else {
-        return res.sendStatus(404);
+        return res.status(500)
+            .json({error: (e as Error).message});
     }
 }
 
-export const deleteNote = (req:Request, res:Response) => {
-    if (NOTES_SERVICE.deleteNote(req.params.id)) {
+
+export const addNote = async (req:Request<{}, {}, InferCreationAttributes<Note>, {}>, res:Response) => {
+
+    try {
+        await NOTES.create(req.body);
         return res.sendStatus(200);
-    } else {
-        return res.sendStatus(404);
+    } catch (e) {
+        return handleError((e as Error), res);
     }
 }
 
 
+export const getNote = async (req:Request, res:Response) => {
 
-export const updateNote = (req:Request, res:Response) => {
-    
-    let isUpdated;
+    try {
+        const note = await NOTES.findOne({ where: { id: req.params.id } });
+        if (note) {
+            return res.status(200).json(note);
+        } else {
+            return res.sendStatus(404);
+        }
+
+    } catch (e) {
+        return handleError((e as Error), res);
+    }
+}
+
+export const deleteNote = async (req:Request, res:Response) => {
     try {
 
-        const params:UpdateNoteParams = {
+        const count = await NOTES.destroy({ where: { id: req.params.id } })
+
+        if (count) {
+            return res.sendStatus(200);
+        } else {
+            return res.sendStatus(404);
+        }
+    
+    } catch (e) {
+        return handleError((e as Error), res);
+    }
+}
+
+
+export const updateNote = async (req:Request, res:Response) => {
+    
+    try {
+
+        const note = await NOTES.findOne({ where: { id: req.params.id } });
+
+        if (!note) {
+            return res.sendStatus(404);
+        }
+
+        note.set({ 
             ...req.body, 
-            id: req.params.id,
-            isActive: parseIsActive(req.body.isActive)
-        } 
-        isUpdated = NOTES_SERVICE.updateNote(params);
+            isActive: parseIsActive(req.body.isActive) 
+        });
+
+        const newNote = await note.save();
+
+        return res.status(200).json(newNote);
 
     } catch (e) {
         return handleError((e as Error), res);
     }
-
-    if(isUpdated) {
-        return res.sendStatus(200);
-    } else {
-        return res.sendStatus(404);
-    }
 }
 
-export const getNotesStats = (req:Request, res:Response) => {
-    return res.status(200).json(NOTES_SERVICE.getNotesStats());
+type NotesState = Record<number, 
+        {
+            categoryId: number, 
+            activeNotes: number,
+            archivedNotes: number
+        }>;
+
+export const getNotesStats = async (req:Request, res:Response) => {
+
+    const categories = await CATEGORIES.findAll();
+    
+    const notesStats:NotesState = categories
+        .reduce<NotesState>((stateMap, cat) => ({
+            ...stateMap, 
+            [cat.id]: {categoryId: cat.id, activeNotes: 0, archivedNotes: 0}
+        }), {});
+
+    (await NOTES.findAll())
+        .forEach(({categoryId, isActive}) => {
+            if(isActive) {
+                notesStats[categoryId].activeNotes++;
+            } else {
+                notesStats[categoryId].archivedNotes++;
+            }
+        });
+
+    return res.status(200).json(notesStats);
 }
 
 export const get404 = (req:Request, res:Response) => {
